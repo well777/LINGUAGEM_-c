@@ -1,0 +1,127 @@
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct {
+    int matricula;
+    char nome[50];
+    float nota;
+} Aluno;
+
+void cadastrarAluno() {
+    Aluno aluno;
+    FILE *file = fopen("alunos.dat", "ab");
+    
+    printf("Digite a matrícula: ");
+    scanf("%d", &aluno.matricula);
+    getchar(); // Limpa buffer
+    
+    printf("Digite o nome: ");
+    fgets(aluno.nome, 50, stdin);
+    strtok(aluno.nome, "\n"); // Remove \n
+    
+    printf("Digite a nota: ");
+    scanf("%f", &aluno.nota);
+
+    fwrite(&aluno, sizeof(Aluno), 1, file);
+    fclose(file);
+    
+    printf("Aluno cadastrado com sucesso!\n");
+}
+
+void listarAlunos() {
+    Aluno aluno;
+    FILE *file = fopen("alunos.dat", "rb");
+
+    if (!file) {
+        printf("Nenhum aluno cadastrado ainda.\n");
+        return;
+    }
+
+    printf("\n--- Lista de Alunos ---\n");
+    while (fread(&aluno, sizeof(Aluno), 1, file)) {
+        printf("Matrícula: %d | Nome: %s | Nota: %.2f\n", aluno.matricula, aluno.nome, aluno.nota);
+    }
+    fclose(file);
+}
+
+void buscarAluno() {
+    int matricula;
+    Aluno aluno;
+    FILE *file = fopen("alunos.dat", "rb");
+    int encontrado = 0;
+
+    printf("Digite a matrícula do aluno: ");
+    scanf("%d", &matricula);
+
+    while (fread(&aluno, sizeof(Aluno), 1, file)) {
+        if (aluno.matricula == matricula) {
+            printf("Aluno encontrado: %s - Nota: %.2f\n", aluno.nome, aluno.nota);
+            encontrado = 1;
+            break;
+        }
+    }
+
+    if (!encontrado) {
+        printf("Aluno não encontrado.\n");
+    }
+
+    fclose(file);
+}
+
+void removerAluno() {
+    int matricula;
+    Aluno aluno;
+    FILE *file = fopen("alunos.dat", "rb");
+    FILE *temp = fopen("temp.dat", "wb");
+    int encontrado = 0;
+
+    printf("Digite a matrícula do aluno para remover: ");
+    scanf("%d", &matricula);
+
+    while (fread(&aluno, sizeof(Aluno), 1, file)) {
+        if (aluno.matricula != matricula) {
+            fwrite(&aluno, sizeof(Aluno), 1, temp);
+        } else {
+            encontrado = 1;
+        }
+    }
+
+    fclose(file);
+    fclose(temp);
+
+    remove("alunos.dat");
+    rename("temp.dat", "alunos.dat");
+
+    if (encontrado)
+        printf("Aluno removido com sucesso!\n");
+    else
+        printf("Aluno não encontrado.\n");
+}
+
+int main() {
+    int opcao;
+
+    do {
+        printf("\n--- Sistema de Cadastro de Alunos ---\n");
+        printf("1. Cadastrar aluno\n");
+        printf("2. Listar alunos\n");
+        printf("3. Buscar aluno por matrícula\n");
+        printf("4. Remover aluno\n");
+        printf("5. Sair\n");
+        printf("Escolha uma opção: ");
+        scanf("%d", &opcao);
+
+        switch (opcao) {
+            case 1: cadastrarAluno(); break;
+            case 2: listarAlunos(); break;
+            case 3: buscarAluno(); break;
+            case 4: removerAluno(); break;
+            case 5: printf("Saindo...\n"); break;
+            default: printf("Opção inválida!\n");
+        }
+    } while (opcao != 5);
+
+    return 0;
+}
